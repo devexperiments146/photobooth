@@ -1,0 +1,15 @@
+.wrapper {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.box {
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.timeleft {
+  font-size: 100px;
+}
