@@ -23,18 +23,41 @@ export class ImagesController {
   }
 
   private async generateImage(dto: ImagesDto){
-
+    const logo = await Jimp.read("public/logo.png");
     const image1 = await Jimp.read(dto.url1);
     const image2 = await Jimp.read(dto.url2);
     const image3 = await Jimp.read(dto.url3);
 
-    const width = Math.max(image1.width + image2.width, image3.width);
-    const height = Math.max(image1.height, image2.height) + image3.height;
+    
+    const spacing = 10;
 
-    const newImage = new Jimp({ width: width, height: height, color: 0xffffffff });
+    // Calcul des largeurs et hauteurs totales
+    const row1Width = image1.width + spacing + image2.width;
+    const row1Height = Math.max(image1.height, image2.height);
+    const totalWidth = Math.max(row1Width, image3.width);
+    const totalHeight = row1Height + spacing + image3.height;
+
+    // Création d’une nouvelle image blanche
+    const newImage = new Jimp({
+      width: totalWidth,
+      height: totalHeight,
+      color: 0xffffffff,
+    });
+
+    // Placement des 3 photos
     newImage.composite(image1, 0, 0);
-    newImage.composite(image2, image1.width, 0);
-    newImage.composite(image3, 0, Math.max(image1.height, image2.height));
+    newImage.composite(image2, image1.width + spacing, 0);
+    newImage.composite(image3, 0, row1Height + spacing);
+
+    // 🔹 Redimensionnement du logo (facultatif : 20 % de la largeur totale)
+    const logoWidth = totalWidth * 0.40;
+    const logoHeight = (logoWidth / logo.width) * logo.height;
+    logo.resize({w:logoWidth, h:logoHeight});
+
+    // 🔹 Placement en bas à droite
+    const logoX = totalWidth - logoWidth - spacing;
+    const logoY = totalHeight - logoHeight - spacing;
+    newImage.composite(logo, logoX, logoY);
 
     return newImage;
   }
