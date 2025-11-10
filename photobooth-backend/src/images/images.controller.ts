@@ -28,37 +28,35 @@ export class ImagesController {
     const image2 = await Jimp.read(dto.url2);
     const image3 = await Jimp.read(dto.url3);
 
-    
-    const spacing = 10;
+    const spacing = 50;
+    const margin = 30;
 
-    // Calcul des largeurs et hauteurs totales
     const row1Width = image1.width + spacing + image2.width;
     const row1Height = Math.max(image1.height, image2.height);
     const totalWidth = Math.max(row1Width, image3.width);
     const totalHeight = row1Height + spacing + image3.height;
 
-    // Création d’une nouvelle image blanche
     const newImage = new Jimp({
       width: totalWidth,
       height: totalHeight,
       color: 0xffffffff,
     });
 
-    // Placement des 3 photos
     newImage.composite(image1, 0, 0);
     newImage.composite(image2, image1.width + spacing, 0);
     newImage.composite(image3, 0, row1Height + spacing);
 
-    // 🔹 Redimensionnement du logo (facultatif : 20 % de la largeur totale)
-    const logoWidth = totalWidth * 0.40;
+    const logoWidth = totalWidth * 0.4;
     const logoHeight = (logoWidth / logo.width) * logo.height;
-    logo.resize({w:logoWidth, h:logoHeight});
+    logo.resize({ w: logoWidth, h: logoHeight });
 
-    // 🔹 Placement en bas à droite
-    const logoX = totalWidth - logoWidth - spacing;
-    const logoY = totalHeight - logoHeight - spacing;
+    // centré dans le bloc bas droit
+    const rightSectionX = image1.width + spacing;
+    const rightSectionWidth = image2.width;
+    const logoX = rightSectionX + (rightSectionWidth - logoWidth) / 2;
+    const logoY = totalHeight - logoHeight - margin;
+
     newImage.composite(logo, logoX, logoY);
-
     return newImage;
   }
 

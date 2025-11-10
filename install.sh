@@ -49,7 +49,7 @@ if [ -d "photobooth-backend" ]; then
     cd photobooth-backend
     npm install
     echo "Démarrage du backend en arrière-plan..."
-    npm run start &
+    npm run build && node --max-old-space-size=256 dist/main.js
     BACKEND_PID=$!
     cd ..
 else
