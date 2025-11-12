@@ -16,13 +16,19 @@ export class ImagesController {
   @UseGuards(AuthGuard)
   @Post()
   async getHello(@Body() dto: ImagesDto, @Req() request: Request): Promise<{image:string,url:string}> {
-    const newImage = await this.generateImage(dto);
+    const verticalMode = process.env.VERTICAL_MODE ? process.env.VERTICAL_MODE === "true" :  false;
+    let newImage;
+    if(verticalMode){
+      newImage = await this.generateVerticalImage(dto);
+    }else{
+       newImage = await this.generateHorizontalImage(dto);
+    }
     const result = await newImage.getBase64(JimpMime.jpeg);
     const url = await this.saveImage(newImage,request);
     return {image:result,url:url};
   }
 
-  private async generateImage(dto: ImagesDto){
+  private async generateHorizontalImage(dto: ImagesDto){
     const logo = await Jimp.read("public/logo.png");
     const image1 = await Jimp.read(dto.url1);
     const image2 = await Jimp.read(dto.url2);
@@ -31,40 +37,97 @@ export class ImagesController {
     const spacing = 50;
     const margin = 30;
 
+    // Dimensions du contenu (sans marges)
     const row1Width = image1.width + spacing + image2.width;
     const row1Height = Math.max(image1.height, image2.height);
     const totalWidth = Math.max(row1Width, image3.width);
     const totalHeight = row1Height + spacing + image3.height;
 
+    // Taille finale AVEC marges sur les 4 côtés
+    const finalWidth = totalWidth + margin * 2;
+    const finalHeight = totalHeight + margin * 2;
+
+    // Création de l'image avec fond blanc
     const newImage = new Jimp({
-      width: totalWidth,
-      height: totalHeight,
+      width: finalWidth,
+      height: finalHeight,
       color: 0xffffffff,
     });
 
-    newImage.composite(image1, 0, 0);
-    newImage.composite(image2, image1.width + spacing, 0);
-    newImage.composite(image3, 0, row1Height + spacing);
+    // Placement des images avec décalage = marge
+    newImage.composite(image1, margin, margin);
+    newImage.composite(image2, margin + image1.width + spacing, margin);
+    newImage.composite(image3, margin, margin + row1Height + spacing);
 
+    // Redimension du logo
     const logoWidth = totalWidth * 0.4;
     const logoHeight = (logoWidth / logo.width) * logo.height;
     logo.resize({ w: logoWidth, h: logoHeight });
 
-    // centré dans le bloc bas droit
-    const rightSectionX = image1.width + spacing;
+    // Calcul de la position du logo (dans le bloc bas droit)
+    const rightSectionX = margin + image1.width + spacing;
     const rightSectionWidth = image2.width;
     const logoX = rightSectionX + (rightSectionWidth - logoWidth) / 2;
-    const logoY = totalHeight - logoHeight - margin;
+    const logoY = margin + totalHeight - logoHeight - margin;
 
     newImage.composite(logo, logoX, logoY);
     return newImage;
   }
 
+  
+  private async generateVerticalImage(dto: ImagesDto){
+  const logo = await Jimp.read("public/logo.png");
+    const images = [
+      await Jimp.read(dto.url1),
+      await Jimp.read(dto.url2),
+      await Jimp.read(dto.url3),
+    ];
+
+    const spacing = 50;
+    const margin = 30;
+
+    // Calcul des dimensions totales
+    const maxWidth = Math.max(...images.map((img) => img.width));
+    const totalHeight =
+      images.reduce((sum, img) => sum + img.height, 0) + spacing * (images.length - 1);
+
+    // Taille du logo (40% de la largeur totale)
+    const logoWidth = maxWidth * 0.4;
+    const logoHeight = (logoWidth / logo.width) * logo.height;
+    logo.resize({ w: logoWidth, h: logoHeight });
+
+    // Hauteur finale avec marges et logo
+    const finalWidth = maxWidth + margin * 2;
+    const finalHeight = totalHeight + logoHeight + spacing + margin * 2;
+
+    // Création de l’image finale (fond blanc)
+    const newImage = new Jimp({
+      width: finalWidth,
+      height: finalHeight,
+      color: 0xffffffff,
+    });
+
+    // Placement des images verticalement
+    let currentY = margin;
+    for (const img of images) {
+      const x = margin + (maxWidth - img.width) / 2; // centrer horizontalement
+      newImage.composite(img, x, currentY);
+      currentY += img.height + spacing;
+    }
+
+    // Placement du logo tout en bas, centré
+    const logoX = margin + (maxWidth - logoWidth) / 2;
+    const logoY = currentY;
+    newImage.composite(logo, logoX, logoY);
+    return newImage;
+  }
+
+
   private async saveImage(image,request: Request):Promise<string>{
 
     const oauth = this.googleService.getAuthClient()
     const user = request['user'];
-    const name = crypto.randomUUID()+'.jpg';
+    const name = 'festirecre2025_'+crypto.randomUUID()+'.jpg';
     oauth.setCredentials(user.credentials)
     const auth = new google.auth.GoogleAuth({
       authClient : oauth,
@@ -88,7 +151,8 @@ export class ImagesController {
       requestBody,
       media: media,
     });
-    return "https://drive.google.com/file/d/"+file.data.id+"/view?usp=drive_link";
+    fs.unlinkSync(name);
+    return "https://drive.google.com/uc?export=download&id="+file.data.id;
   }
 
 }
