@@ -5,6 +5,7 @@ if [ -d "photobooth-backend" ]; then
     cd photobooth-backend
     echo "Mise à jour du backend"
     git fetch origin
+    git reset --hard origin/$(git branch --show-current)
     npm cache clean -f && npm update
     cd ..
 else
@@ -19,6 +20,7 @@ if [ -d "photobooth-frontend" ]; then
     cd photobooth-frontend
     echo "Mise à jour du frontend..."
     git fetch origin
+    git reset --hard origin/$(git branch --show-current)
     npm cache clean -f && npm update
 else
     echo "Erreur : dossier 'photobooth-frontend' introuvable"
