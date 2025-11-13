@@ -132,17 +132,16 @@ const onKeyDown = React.useCallback(async () => {
   }, []);
 
   return (
-      <div className="camera-container relative bg-black w-full max-w-full">
+      <div className="camera-container relative bg-black w-full h-[calc(100vh-100px)] flex items-center justify-center overflow-hidden">
         {(step <= 5) && (
-          <> <div className="relative w-full pt-[56.25%] bg-black"><Webcam
+          <><Webcam
             ref={webcamRef}
             audio={true}
             screenshotFormat="image/jpeg"
             videoConstraints={videoConstraints}
             onUserMedia={onUserMedia}
-            className="w-full h-full object-contain bg-black"
+            className="max-w-full max-h-full object-contain bg-black"
           />
-          </div>
           {(step === 0 || step === 2 || step === 4) && (
             <div className="absolute bottom-6 left-0 right-0 flex justify-center">
               <div className="bg-black/60 text-white text-2xl font-semibold px-6 py-3 rounded-xl">
