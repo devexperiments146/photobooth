@@ -167,22 +167,28 @@ const onKeyDown = React.useCallback(async () => {
         </div>
       }
       {step === 7 && urlResult && text && (
-        <div className="flex items-center justify-center w-full h-full bg-white p-8">
+        <div className="flex flex-col w-full min-h-screen bg-white p-8 space-y-8">
 
-          <div className="flex-1 flex justify-center">
-            <img
-              src={urlResult}
-              alt="Screenshot"
-              className="max-h-[80vh] object-contain rounded-2xl shadow-lg"
-            />
-          </div>
-          <div className="flex flex-col items-center justify-center flex-1 text-center space-y-6">
-            <QRCode value={text} size={200} />
-            <div className="text-gray-800 text-xl font-semibold">
-              Scannez le QR code pour récupérer votre photo et appuyer sur la touche pour revenir au point de départ
-            </div>
-          </div>
-        </div>
+  {/* Ligne 1 : Image centrée, hauteur limitée */}
+  <div className="flex justify-center items-center w-full">
+    <img
+      src={urlResult}
+      alt="Screenshot"
+      className="max-h-[60vh] max-w-full object-contain rounded-2xl shadow-lg"
+    />
+  </div>
+
+  {/* Ligne 2 : QR code + texte côte à côte */}
+  <div className="flex flex-col md:flex-row items-center justify-center w-full md:space-x-8 space-y-6 md:space-y-0">
+    <QRCode value={text} size={200} />
+    <div className="text-gray-800 text-xl font-semibold text-center md:text-left max-w-md">
+      Scannez le QR code pour récupérer votre photo<br />
+      et appuyez sur une touche pour revenir au point de départ.
+    </div>
+  </div>
+
+</div>
+
       )}
       </div>
   );
