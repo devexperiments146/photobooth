@@ -6,7 +6,7 @@ if [ -d "photobooth-backend" ]; then
     echo "Mise à jour du backend"
     git fetch origin
     git reset --hard origin/$(git branch --show-current)
-    npm cache clean -f && npm update
+    npm cache clean -f && npm install
     cd ..
 else
     echo "Erreur : dossier 'photobooth-backend' introuvable"
@@ -21,7 +21,7 @@ if [ -d "photobooth-frontend" ]; then
     echo "Mise à jour du frontend..."
     git fetch origin
     git reset --hard origin/$(git branch --show-current)
-    npm cache clean -f && npm update
+    npm cache clean -f && npm install
 else
     echo "Erreur : dossier 'photobooth-frontend' introuvable"
     exit 1
