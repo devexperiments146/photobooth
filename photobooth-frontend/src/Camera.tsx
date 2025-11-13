@@ -41,10 +41,7 @@ const Camera: React.FC = () => {
 
 const onKeyDown = React.useCallback(async () => {
   // on ne bloque que la première prise si la caméra n’est pas encore prête
-  if (step === 0 && !cameraReady) {
-    return;
-  }
-  if (step === 0) {
+  if (step === 0 && cameraReady){
     setStep(1);
     setTimeLeft(3);
   } else if (step === 2) {// reset pour forcer la réinit caméra
@@ -54,6 +51,7 @@ const onKeyDown = React.useCallback(async () => {
     setStep(5);
     setTimeLeft(3);
   } else if (step === 7) {
+    setCameraReady(false);
     setStep(0);
   }
 }, [step, cameraReady]);
@@ -115,7 +113,7 @@ const onKeyDown = React.useCallback(async () => {
     if (timeLeft === 0) {
       takePicture();
     }
-  }, [timeLeft, step, url1, url2]);
+  }, [timeLeft, step, url1, url2,navigate]);
 
   useEffect(() => {
     document.addEventListener('keydown', onKeyDown);
@@ -142,7 +140,7 @@ const onKeyDown = React.useCallback(async () => {
               onUserMedia={onUserMedia}
               className="w-full h-full object-contain bg-black"
             />
-          {(step === 0 || step === 2 || step === 4) && (
+          {((step === 0 && cameraReady) || step === 2 || step === 4) && (
             <div className="absolute bottom-6 left-0 right-0 flex justify-center">
               <div className="bg-black/60 text-white text-2xl font-semibold px-6 py-3 rounded-xl">
                 Appuyez sur le bouton pour prendre la photo ({step===0?1:(step===2?2:3)}/3) !
