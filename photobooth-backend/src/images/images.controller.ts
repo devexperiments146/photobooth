@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ImagesDto } from './images.dto';
 import { Jimp, JimpMime } from 'jimp';
 import { google } from 'googleapis';
@@ -13,9 +13,16 @@ export class ImagesController {
 
   constructor(private readonly googleService: GoogleService) {}
 
+
+    @UseGuards(AuthGuard)
+    @Delete(':id')
+    async delete(@Req() request: Request,@Param('id') id: string): Promise<void> {
+      await this.deleteImage(id,request);
+    }
+    
   @UseGuards(AuthGuard)
   @Post()
-  async getHello(@Body() dto: ImagesDto, @Req() request: Request): Promise<{image:string,url:string}> {
+  async getHello(@Body() dto: ImagesDto, @Req() request: Request): Promise<{image:string,url:string,id:string}> {
     const verticalMode = process.env.VERTICAL_MODE ? process.env.VERTICAL_MODE === "true" :  false;
     let newImage;
     if(verticalMode){
@@ -24,8 +31,8 @@ export class ImagesController {
        newImage = await this.generateHorizontalImage(dto);
     }
     const result = await newImage.getBase64(JimpMime.jpeg);
-    const url = await this.saveImage(newImage,request);
-    return {image:result,url:url};
+    const { url ,id} = await this.saveImage(newImage,request);
+    return {image:result,url:url,id:id};
   }
 
   private async generateHorizontalImage(dto: ImagesDto){
@@ -68,7 +75,7 @@ export class ImagesController {
     const rightSectionX = margin + image1.width + spacing;
     const rightSectionWidth = image2.width;
     const logoX = rightSectionX + (rightSectionWidth - logoWidth) / 2;
-    const logoY = margin + totalHeight - logoHeight - margin;
+    const logoY = row1Height + row1Height *0.2 ;
 
     newImage.composite(logo, logoX, logoY);
     return newImage;
@@ -123,11 +130,11 @@ export class ImagesController {
   }
 
 
-  private async saveImage(image,request: Request):Promise<string>{
+  private async saveImage(image,request: Request):Promise<{url : string, id :string}>{
 
     const oauth = this.googleService.getAuthClient()
     const user = request['user'];
-    const name = 'festirecre2025_'+crypto.randomUUID()+'.jpg';
+    const name = 'festirecre2025_'+Math.random() * 1000000000000+'.jpg';
     oauth.setCredentials(user.credentials)
     const auth = new google.auth.GoogleAuth({
       authClient : oauth,
@@ -152,7 +159,29 @@ export class ImagesController {
       media: media,
     });
     fs.unlinkSync(name);
-    return "https://drive.google.com/uc?export=download&id="+file.data.id;
+    return {url : "https://drive.google.com/uc?export=download&id="+file.data.id, id: file.data.id ?? ""}
+  }
+
+  private async deleteImage(fileId: string, request: Request): Promise<boolean> {
+    const oauth = this.googleService.getAuthClient();
+    const user = request['user'];
+
+    oauth.setCredentials(user.credentials);
+
+    const auth = new google.auth.GoogleAuth({
+      authClient: oauth,
+      scopes: ['https://www.googleapis.com/auth/drive'],
+    });
+
+    const drive = google.drive({ version: 'v3', auth });
+
+    try {
+      await drive.files.delete({ fileId });
+      return true;
+    } catch (error) {
+      console.error("Erreur suppression Drive:", error);
+      return false;
+    }
   }
 
 }

@@ -18,6 +18,8 @@ const Camera: React.FC = () => {
   const [urlResult, setUrlResult] = React.useState(null);
   const [text, setText] = React.useState(null);
   const [cameraReady, setCameraReady] = React.useState(false);
+  
+  const [id, setId] = React.useState(null);
 
   //0 => Webcam
   //1 => Compteur
@@ -51,11 +53,28 @@ const onKeyDown = React.useCallback(async () => {
     setStep(5);
     setTimeLeft(3);
   } else if (step === 7) {
-    setCameraReady(false);
-    setStep(0);
+    setStep(8);
+    try{
+      const token = localStorage.getItem("auth_token");
+      const axiosConfig = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+      };
+      await axios.delete(
+        "http://localhost:4000/images/"+id,
+        axiosConfig
+      );
+      setCameraReady(false);
+      setStep(0);
+     }catch (error) {
+    console.error("Erreur lors de l'appel HTTP :", error);
+    localStorage.removeItem("auth_token");
+    navigate("/"); 
   }
-}, [step, cameraReady]);
-
+} 
+}, [step, cameraReady,id,navigate]);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -97,6 +116,7 @@ const onKeyDown = React.useCallback(async () => {
             if (response.data) {
               setUrlResult(response.data.image);
               setText(response.data.url);
+              setId(response.data.id);
               setStep(7);
             }else{
               localStorage.removeItem("auth_token");
@@ -125,7 +145,6 @@ const onKeyDown = React.useCallback(async () => {
 
 
   const onUserMedia = React.useCallback(() => {
-    console.log("Caméra prête !");
     setCameraReady(true);
   }, []);
 
@@ -197,6 +216,15 @@ const onKeyDown = React.useCallback(async () => {
 </div>
 
       )}
+      
+      {step === 8 && 
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white">
+          <div className="w-16 h-16 border-8 border-white/30 border-t-white rounded-full animate-spin mb-8"></div>
+          <div className="text-4xl font-bold tracking-wide">
+            Suppression de la photo...
+          </div>
+        </div>
+      }
       </div>
   );
 };
