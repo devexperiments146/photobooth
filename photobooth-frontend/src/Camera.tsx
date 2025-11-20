@@ -209,7 +209,7 @@ const onKeyDown = React.useCallback(async () => {
     <QRCode value={text} size={200} />
     <div className="text-gray-800 text-xl font-semibold text-center md:text-left max-w-md">
       Scannez le QR code pour récupérer votre photo<br />
-      et appuyez sur une touche pour revenir au point de départ.
+      et appuyez sur une touche pour supprimer votre photo.
     </div>
   </div>
 

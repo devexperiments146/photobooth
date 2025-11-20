@@ -58,7 +58,7 @@ export class ImagesController {
     const newImage = new Jimp({
       width: finalWidth,
       height: finalHeight,
-      color: 0xffffffff,
+      color: 0x99D7F4FF,
     });
 
     // Placement des images avec décalage = marge
@@ -67,15 +67,16 @@ export class ImagesController {
     newImage.composite(image3, margin, margin + row1Height + spacing);
 
     // Redimension du logo
-    const logoWidth = totalWidth * 0.4;
-    const logoHeight = (logoWidth / logo.width) * logo.height;
-    logo.resize({ w: logoWidth, h: logoHeight });
+    const newLogoHeight = image3.height+margin;
+    const scale = newLogoHeight / logo.height; // facteur d'échelle
+    const newLogoWidth = logo.width * scale; // la
+    await logo.resize({ w: newLogoWidth, h: newLogoHeight });
 
     // Calcul de la position du logo (dans le bloc bas droit)
     const rightSectionX = margin + image1.width + spacing;
     const rightSectionWidth = image2.width;
-    const logoX = rightSectionX + (rightSectionWidth - logoWidth) / 2;
-    const logoY = row1Height + row1Height *0.2 ;
+    const logoX = rightSectionX + (rightSectionWidth - newLogoWidth) / 2;
+    const logoY = margin + row1Height + spacing;
 
     newImage.composite(logo, logoX, logoY);
     return newImage;
