@@ -1,7 +1,8 @@
-import { Controller, Get, Redirect, Query, Res } from '@nestjs/common';
+import { Controller, Get, Post, Redirect, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { AppService } from './app.service';
 import { JwtService } from '@nestjs/jwt';
+import { exec } from 'child_process';
 
 @Controller()
 export class AppController {
@@ -23,5 +24,17 @@ export class AppController {
     const url = process.env.REDIRECT_TO_LOGIN + "?auth_token="+token;
 
     return { url: url};
+  }
+
+  
+  @Post('shutdown')
+  async shutdown(): Promise<void> {
+    exec('sudo shutdown -h now', (error, stdout, stderr) => {
+      if (error) {
+        console.error('Erreur extinction:', error);
+        return;
+      }
+      console.log('Extinction du Raspberry en cours');
+    });
   }
 }

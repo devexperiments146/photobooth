@@ -1,11 +1,14 @@
-
+#!/bin/bash
 
 echo "=== Démarrage du backend ==="
 
 if [ -d "photobooth-backend" ]; then
-    cd photobooth-backend
+    cd photobooth-backend || exit 1
+    echo "Build du backend..."
+    npm run build || exit 1
+
     echo "Démarrage du backend en arrière-plan..."
-    npm run build && node --max-old-space-size=256 dist/main.js
+    node --max-old-space-size=256 dist/main.js &
     BACKEND_PID=$!
     cd ..
 else
@@ -17,7 +20,7 @@ echo ""
 echo "=== Démarrage du frontend ==="
 
 if [ -d "photobooth-frontend" ]; then
-    cd photobooth-frontend
+    cd photobooth-frontend || exit 1
     echo "Démarrage du frontend..."
     npm run start
 else
@@ -25,5 +28,5 @@ else
     exit 1
 fi
 
-# Optionnel : attendre la fin du backend si nécessaire
+# Optionnel : attendre la fin du backend
 wait $BACKEND_PID

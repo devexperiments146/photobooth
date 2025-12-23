@@ -58,7 +58,7 @@ export class ImagesController {
     const newImage = new Jimp({
       width: finalWidth,
       height: finalHeight,
-      color: 0x99D7F4FF,
+      color: 0xC23B36FF,
     });
 
     // Placement des images avec décalage = marge
