@@ -19,9 +19,6 @@ const Camera: React.FC = () => {
   const [text, setText] = React.useState(null);
   const [cameraReady, setCameraReady] = React.useState(false);
   const [id, setId] = React.useState(null);
-  const longPressTimeout = useRef<number | null>(null);
-  const longPressTriggered = useRef(false);
-  const LONG_PRESS_DURATION = 5000; // 1 seconde
 
   //0 => Webcam
   //1 => Compteur
@@ -138,56 +135,12 @@ const onKeyDown = React.useCallback(async () => {
   }, [timeLeft, step, url1, url2,navigate]);
 
   
- const handleKeyDown = React.useCallback((e: KeyboardEvent) => {
-  // Limite à une touche physique
-  if (e.code !== "KeyA") return;
-
-  // bloque la répétition auto
-  if (longPressTimeout.current !== null) return;
-
-  e.preventDefault();
-
-  longPressTriggered.current = false;
-
-  longPressTimeout.current = window.setTimeout(async () => {
-    longPressTriggered.current = true;
-    const token = localStorage.getItem("auth_token");
-    const axiosConfig = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
-      },
-    };
-    const response = await axios.post(
-        "http://localhost:4000/shutdown",
-        axiosConfig
-      );
-  }, LONG_PRESS_DURATION);
-}, []);
-
-  const handleKeyUp = React.useCallback((e: KeyboardEvent) => {
-    if (e.code !== "KeyA") return;
-
-    if (longPressTimeout.current !== null) {
-      clearTimeout(longPressTimeout.current);
-      longPressTimeout.current = null;
-    }
-    if (!longPressTriggered.current) {
-      onKeyDown();
-    }
-  }, [onKeyDown]);
-
-  
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown );
-    document.addEventListener("keyup", handleKeyUp );
-
+    document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keyup", handleKeyUp );
+      document.removeEventListener('keydown', onKeyDown);
     };
-  }, [handleKeyDown, handleKeyUp ]);
-
+  }, [onKeyDown]);
 
 
   const onUserMedia = React.useCallback(() => {

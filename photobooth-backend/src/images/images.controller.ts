@@ -35,52 +35,67 @@ export class ImagesController {
     return {image:result,url:url,id:id};
   }
 
-  private async generateHorizontalImage(dto: ImagesDto){
-    const logo = await Jimp.read("public/logo.png");
-    const image1 = await Jimp.read(dto.url1);
-    const image2 = await Jimp.read(dto.url2);
-    const image3 = await Jimp.read(dto.url3);
+ private async generateHorizontalImage(dto: ImagesDto) {
+  const logo = await Jimp.read("public/logo.png");
+  const tile = await Jimp.read("public/background.png");
 
-    const spacing = 50;
-    const margin = 30;
+  const image1 = await Jimp.read(dto.url1);
+  const image2 = await Jimp.read(dto.url2);
+  const image3 = await Jimp.read(dto.url3);
 
-    // Dimensions du contenu (sans marges)
-    const row1Width = image1.width + spacing + image2.width;
-    const row1Height = Math.max(image1.height, image2.height);
-    const totalWidth = Math.max(row1Width, image3.width);
-    const totalHeight = row1Height + spacing + image3.height;
+  const spacing = 50;
+  const margin = 30;
 
-    // Taille finale AVEC marges sur les 4 côtés
-    const finalWidth = totalWidth + margin * 2;
-    const finalHeight = totalHeight + margin * 2;
+  // Dimensions du contenu
+  const row1Width = image1.width + spacing + image2.width;
+  const row1Height = Math.max(image1.height, image2.height);
 
-    // Création de l'image avec fond blanc
-    const newImage = new Jimp({
-      width: finalWidth,
-      height: finalHeight,
-      color: 0xC23B36FF,
-    });
+  const totalWidth = Math.max(row1Width, image3.width);
+  const totalHeight = row1Height + spacing + image3.height;
 
-    // Placement des images avec décalage = marge
-    newImage.composite(image1, margin, margin);
-    newImage.composite(image2, margin + image1.width + spacing, margin);
-    newImage.composite(image3, margin, margin + row1Height + spacing);
+  // Dimensions finales
+  const finalWidth = totalWidth + margin * 2;
+  const finalHeight = totalHeight + margin * 2;
 
-    // Redimension du logo
-    const newLogoHeight = image3.height+margin;
-    const scale = newLogoHeight / logo.height; // facteur d'échelle
-    const newLogoWidth = logo.width * scale; // la
-    await logo.resize({ w: newLogoWidth, h: newLogoHeight });
+  // === CANVAS FINAL ===
+  const canvas = new Jimp({
+    width: finalWidth,
+    height: finalHeight,
+    color: 0x00000000, // transparent
+  });
 
-    // Calcul de la position du logo (dans le bloc bas droit)
-    const rightSectionX = margin + image1.width + spacing;
-    const rightSectionWidth = image2.width;
-    const logoX = rightSectionX + (rightSectionWidth - newLogoWidth) / 2;
-    const logoY = margin + row1Height + spacing;
-
-    newImage.composite(logo, logoX, logoY);
-    return newImage;
+  // === BACKGROUND-REPEAT ===
+  for (let y = 0; y < finalHeight; y += tile.height) {
+    for (let x = 0; x < finalWidth; x += tile.width) {
+      canvas.composite(tile, x, y);
+    }
   }
+
+  // === CONTENU ===
+  canvas.composite(image1, margin, margin);
+  canvas.composite(
+    image2,
+    margin + image1.width + spacing,
+    margin
+  );
+  canvas.composite(
+    image3,
+    margin,
+    margin + row1Height + spacing
+  );
+
+  // === LOGO ===
+  const rightSectionX = margin + image1.width + spacing;
+  const rightSectionWidth = image2.width;
+
+  const logoX =
+    rightSectionX + (rightSectionWidth - logo.width) / 2;
+  const logoY = margin + row1Height + spacing;
+
+  canvas.composite(logo, logoX, logoY);
+
+  return canvas;
+}
 
   
   private async generateVerticalImage(dto: ImagesDto){
