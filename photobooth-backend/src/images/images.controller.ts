@@ -2,10 +2,10 @@ import { Body, Controller, Delete, Param, Post, Req, UseGuards } from '@nestjs/c
 import { ImagesDto } from './images.dto';
 import { Jimp, JimpMime } from 'jimp';
 import { google } from 'googleapis';
-import * as crypto from 'crypto';
+// import * as crypto from 'crypto'; // Inutilisé dans ce fragment
 import { AuthGuard } from 'src/app/guards/auth.guard';
 import { GoogleService } from 'src/app/google.service';
-import { Readable } from "stream";
+// import { Readable } from "stream"; // Inutilisé dans ce fragment
 import fs from "fs";
 
 @Controller('images')
@@ -23,7 +23,7 @@ export class ImagesController {
   @UseGuards(AuthGuard)
   @Post()
   async getHello(@Body() dto: ImagesDto, @Req() request: Request): Promise<{image:string,url:string,id:string}> {
-    const verticalMode = process.env.VERTICAL_MODE ? process.env.VERTICAL_MODE === "true" :  false;
+    const verticalMode = process.env.VERTICAL_MODE ? process.env.VERTICAL_MODE === "true" : false;
     let newImage;
     if(verticalMode){
       newImage = await this.generateVerticalImage(dto);
@@ -35,71 +35,68 @@ export class ImagesController {
     return {image:result,url:url,id:id};
   }
 
- private async generateHorizontalImage(dto: ImagesDto) {
-  const logo = await Jimp.read("public/logo.png");
-  const tile = await Jimp.read("public/background.png");
+private async generateHorizontalImage(dto: ImagesDto) {
+    const logo = await Jimp.read("public/logo.png");
+    const image1 = await Jimp.read(dto.url1);
+    const image2 = await Jimp.read(dto.url2);
+    const image3 = await Jimp.read(dto.url3);
 
-  const image1 = await Jimp.read(dto.url1);
-  const image2 = await Jimp.read(dto.url2);
-  const image3 = await Jimp.read(dto.url3);
+    const spacing = 50;
+    const margin = 30;
 
-  const spacing = 50;
-  const margin = 30;
+    // Dimensions du contenu
+    const row1Width = image1.width + spacing + image2.width;
+    const row1Height = Math.max(image1.height, image2.height);
 
-  // Dimensions du contenu
-  const row1Width = image1.width + spacing + image2.width;
-  const row1Height = Math.max(image1.height, image2.height);
+    const totalWidth = Math.max(row1Width, image3.width);
+    const totalHeight = row1Height + spacing + image3.height;
 
-  const totalWidth = Math.max(row1Width, image3.width);
-  const totalHeight = row1Height + spacing + image3.height;
+    // === NOUVEAU : LOGO EN VERSION MAXI ===
+    // On base la taille du logo sur 45% de la largeur TOTALE du montage, 
+    // ainsi il dépassera largement la taille de la simple image au-dessus.
+    const logoWidth = totalWidth * 0.45; // Près de la moitié de la largeur globale
+    const logoHeight = (logoWidth / logo.width) * logo.height;
+    logo.resize({ w: logoWidth, h: logoHeight });
 
-  // Dimensions finales
-  const finalWidth = totalWidth + margin * 2;
-  const finalHeight = totalHeight + margin * 2;
+    // Dimensions finales
+    const finalWidth = totalWidth + margin * 2;
+    const finalHeight = totalHeight + margin * 2;
 
-  // === CANVAS FINAL ===
-  const canvas = new Jimp({
-    width: finalWidth,
-    height: finalHeight,
-    color: 0x00000000, // transparent
-  });
+    // === CANVAS FINAL ===
+    const canvas = new Jimp({
+      width: finalWidth,
+      height: finalHeight,
+      color: 0xFFFFFFFF,
+    });
 
-  // === BACKGROUND-REPEAT ===
-  for (let y = 0; y < finalHeight; y += tile.height) {
-    for (let x = 0; x < finalWidth; x += tile.width) {
-      canvas.composite(tile, x, y);
-    }
+    // === CONTENU ===
+    canvas.composite(image1, margin, margin);
+    canvas.composite(
+      image2,
+      margin + image1.width + spacing,
+      margin
+    );
+    canvas.composite(
+      image3,
+      margin,
+      margin + row1Height + spacing
+    );
+
+    // === LOGO POSITIONNÉ ===
+    const rightSectionX = margin + image1.width + spacing;
+    const rightSectionWidth = image2.width;
+
+    // Calcul pour centrer parfaitement ce GROS logo sous la colonne de droite
+    const logoX = rightSectionX + (rightSectionWidth - logo.width) / 2;
+    const logoY = margin + row1Height + spacing;
+
+    canvas.composite(logo, logoX, logoY);
+
+    return canvas;
   }
 
-  // === CONTENU ===
-  canvas.composite(image1, margin, margin);
-  canvas.composite(
-    image2,
-    margin + image1.width + spacing,
-    margin
-  );
-  canvas.composite(
-    image3,
-    margin,
-    margin + row1Height + spacing
-  );
-
-  // === LOGO ===
-  const rightSectionX = margin + image1.width + spacing;
-  const rightSectionWidth = image2.width;
-
-  const logoX =
-    rightSectionX + (rightSectionWidth - logo.width) / 2;
-  const logoY = margin + row1Height + spacing;
-
-  canvas.composite(logo, logoX, logoY);
-
-  return canvas;
-}
-
-  
-  private async generateVerticalImage(dto: ImagesDto){
-  const logo = await Jimp.read("public/logo.png");
+  private async generateVerticalImage(dto: ImagesDto) {
+    const logo = await Jimp.read("public/logo.png");
     const images = [
       await Jimp.read(dto.url1),
       await Jimp.read(dto.url2),
@@ -114,8 +111,8 @@ export class ImagesController {
     const totalHeight =
       images.reduce((sum, img) => sum + img.height, 0) + spacing * (images.length - 1);
 
-    // Taille du logo (40% de la largeur totale)
-    const logoWidth = maxWidth * 0.4;
+    // === NOUVEAU : ENCORE PLUS GROS (85% de la largeur maximale) ===
+    const logoWidth = maxWidth * 0.85; 
     const logoHeight = (logoWidth / logo.width) * logo.height;
     logo.resize({ w: logoWidth, h: logoHeight });
 
@@ -144,7 +141,6 @@ export class ImagesController {
     newImage.composite(logo, logoX, logoY);
     return newImage;
   }
-
 
   private async saveImage(image,request: Request):Promise<{url : string, id :string}>{
 
