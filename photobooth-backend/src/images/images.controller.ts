@@ -112,7 +112,7 @@ private async generateHorizontalImage(dto: ImagesDto) {
       images.reduce((sum, img) => sum + img.height, 0) + spacing * (images.length - 1);
 
     // === NOUVEAU : ENCORE PLUS GROS (85% de la largeur maximale) ===
-    const logoWidth = maxWidth * 0.85; 
+    const logoWidth = maxWidth * 0.60; 
     const logoHeight = (logoWidth / logo.width) * logo.height;
     logo.resize({ w: logoWidth, h: logoHeight });
 
@@ -146,7 +146,7 @@ private async generateHorizontalImage(dto: ImagesDto) {
 
     const oauth = this.googleService.getAuthClient()
     const user = request['user'];
-    const name = 'festirecre2025_'+Math.random() * 1000000000000+'.jpg';
+    const name = 'fetedesecoles2026_'+Math.random() * 1000000000000+'.jpg';
     oauth.setCredentials(user.credentials)
     const auth = new google.auth.GoogleAuth({
       authClient : oauth,
