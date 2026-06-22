@@ -54,7 +54,7 @@ private async generateHorizontalImage(dto: ImagesDto) {
     // === NOUVEAU : LOGO EN VERSION MAXI ===
     // On base la taille du logo sur 45% de la largeur TOTALE du montage, 
     // ainsi il dépassera largement la taille de la simple image au-dessus.
-    const logoWidth = totalWidth * 0.45; // Près de la moitié de la largeur globale
+    const logoWidth = totalWidth * 0.35; // Près de la moitié de la largeur globale
     const logoHeight = (logoWidth / logo.width) * logo.height;
     logo.resize({ w: logoWidth, h: logoHeight });
 
